@@ -24,6 +24,7 @@ pipeline {
             steps {
                 bat 'mvn test'
             }
+
             post {
                 always {
                     junit 'target/surefire-reports/*.xml'
@@ -61,12 +62,15 @@ pipeline {
         stage('Security') {
             steps {
                 bat '''
+                docker save sit223-devops-app:%BUILD_NUMBER% -o sit223-devops-app.tar
+
                 docker run --rm ^
-                -v //./pipe/docker_engine://./pipe/docker_engine ^
+                -v "%CD%:/workspace" ^
                 aquasec/trivy:latest image ^
+                --input /workspace/sit223-devops-app.tar ^
                 --severity HIGH,CRITICAL ^
                 --exit-code 0 ^
-                sit223-devops-app:%BUILD_NUMBER%
+                --scanners vuln
                 '''
             }
         }
