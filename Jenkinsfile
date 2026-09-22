@@ -91,11 +91,31 @@ pipeline {
                 '''
             }
         }
+
+        stage('Release') {
+            steps {
+                bat '''
+                echo Creating release for Jenkins Build %BUILD_NUMBER%
+
+                docker tag sit223-devops-app:%BUILD_NUMBER% sit223-devops-app:release-%BUILD_NUMBER%
+
+                echo ----------------------------------------
+                echo Release created successfully
+                echo Release version: release-%BUILD_NUMBER%
+                echo Docker image: sit223-devops-app:release-%BUILD_NUMBER%
+                echo Jenkins build: %BUILD_NUMBER%
+                echo ----------------------------------------
+
+                docker images sit223-devops-app
+                '''
+            }
+        }
     }
 
     post {
         success {
             echo 'Pipeline completed successfully!'
+            echo "Release ${env.BUILD_NUMBER} completed successfully."
         }
 
         failure {
