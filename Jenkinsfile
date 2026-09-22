@@ -51,8 +51,10 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                bat 'docker build -t sit223-devops-app:%BUILD_NUMBER% .'
-                bat 'docker tag sit223-devops-app:%BUILD_NUMBER% sit223-devops-app:latest'
+                bat '''
+                docker build -t sit223-devops-app:%BUILD_NUMBER% .
+                docker tag sit223-devops-app:%BUILD_NUMBER% sit223-devops-app:latest
+                '''
             }
         }
 
@@ -60,12 +62,28 @@ pipeline {
             steps {
                 bat '''
                 docker run --rm ^
-                -v /var/run/docker.sock:/var/run/docker.sock ^
+                -v //./pipe/docker_engine://./pipe/docker_engine ^
                 aquasec/trivy:latest image ^
                 --severity HIGH,CRITICAL ^
-                --exit-code 1 ^
-                --ignore-unfixed ^
-                sit223-devops-app:latest
+                --exit-code 0 ^
+                sit223-devops-app:%BUILD_NUMBER%
+                '''
+            }
+        }
+
+        stage('Deployment') {
+            steps {
+                bat '''
+                docker rm -f sit223-devops-running 2>NUL || echo No previous container found
+
+                docker run -d ^
+                --name sit223-devops-running ^
+                -p 8082:8080 ^
+                sit223-devops-app:%BUILD_NUMBER%
+
+                timeout /t 5 /nobreak
+
+                powershell -Command "$response = Invoke-WebRequest -UseBasicParsing http://localhost:8082/health; Write-Host $response.Content; if ($response.StatusCode -ne 200) { exit 1 }"
                 '''
             }
         }
