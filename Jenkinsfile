@@ -40,7 +40,7 @@ pipeline {
         stage('Code Quality') {
             steps {
                 withSonarQubeEnv('SonarQube-Local') {
-                    bat 'mvn sonar:sonar -Dsonar.projectKey=SIT223-7.3HD -Dsonar.projectName=SIT223-7.3HD'
+                    bat 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=SIT223-7.3HD -Dsonar.projectName=SIT223-7.3HD'
                 }
             }
         }
