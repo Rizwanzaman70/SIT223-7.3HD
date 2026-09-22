@@ -36,6 +36,14 @@ pipeline {
                 bat 'mvn package -DskipTests'
             }
         }
+
+        stage('Code Quality') {
+            steps {
+                withSonarQubeEnv('SonarQube-Local') {
+                    bat 'mvn sonar:sonar -Dsonar.projectKey=SIT223-7.3HD -Dsonar.projectName=SIT223-7.3HD'
+                }
+            }
+        }
     }
 
     post {
