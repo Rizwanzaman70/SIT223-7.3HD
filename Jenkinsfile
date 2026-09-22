@@ -110,12 +110,41 @@ pipeline {
                 '''
             }
         }
+
+        stage('Monitoring') {
+            steps {
+                bat '''
+                echo ========================================
+                echo Monitoring deployed application
+                echo ========================================
+
+                powershell -Command ^
+                "$failed = $false; ^
+                for ($i = 1; $i -le 3; $i++) { ^
+                    Write-Host ('Health check ' + $i + ' of 3'); ^
+                    try { ^
+                        $response = Invoke-WebRequest -UseBasicParsing http://localhost:8082/health; ^
+                        Write-Host ('HTTP Status: ' + $response.StatusCode); ^
+                        Write-Host ('Response: ' + $response.Content); ^
+                        if ($response.StatusCode -ne 200) { $failed = $true }; ^
+                    } catch { ^
+                        Write-Host ('Monitoring failure: ' + $_.Exception.Message); ^
+                        $failed = $true; ^
+                    }; ^
+                    if ($i -lt 3) { Start-Sleep -Seconds 2 } ^
+                }; ^
+                if ($failed) { exit 1 }; ^
+                Write-Host 'Application monitoring completed successfully.'"
+                '''
+            }
+        }
     }
 
     post {
         success {
             echo 'Pipeline completed successfully!'
             echo "Release ${env.BUILD_NUMBER} completed successfully."
+            echo 'Deployment health monitoring passed.'
         }
 
         failure {
